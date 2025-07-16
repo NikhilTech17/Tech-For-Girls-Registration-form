@@ -6,6 +6,8 @@ window.onload = function () {
   const confirmationMsg = document.getElementById("confirmationMsg");
   const form = document.getElementById("registrationForm");
 
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxq_3AFaARuHXx8uhd9-G8LgWUN_sCQwSgCVmYUwRZ-zWwp_p9RXu3CdumckAdAirbcxg/exec";
+
   // ✅ Reset click counter and enable WhatsApp button on page load
   clickCounter = 0;
   clickCountText.textContent = "Click count: 0/5";
@@ -36,11 +38,10 @@ window.onload = function () {
       return;
     }
 
-    // Collect form data
-    const name = document.getElementById("name").value;
-    const phone = document.getElementById("phone").value;
-    const email = document.getElementById("email").value;
-    const college = document.getElementById("college").value;
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const college = document.getElementById("college").value.trim();
     const screenshot = document.getElementById("screenshot").files[0];
 
     const formData = new FormData();
@@ -50,9 +51,22 @@ window.onload = function () {
     formData.append("college", college);
     formData.append("screenshot", screenshot);
 
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwCCo8RorKlOoGJ6w6Gv8nosgqaW7xF4D1zY0yakuG72arJGDTgsHFviCkzsZ5LK2DZgA/exec";
-
     try {
+      // ✅ Check if already registered
+      const checkResponse = await fetch(scriptURL);
+      const entries = await checkResponse.json();
+
+      const alreadyRegistered = entries.some(entry =>
+        (entry.email && entry.email.toLowerCase() === email) ||
+        (entry.phone && entry.phone === phone)
+      );
+
+      if (alreadyRegistered) {
+        alert("You have already registered. Thank you!");
+        return;
+      }
+
+      // ✅ Submit the form
       const response = await fetch(scriptURL, {
         method: "POST",
         body: formData
@@ -60,8 +74,6 @@ window.onload = function () {
 
       if (response.ok) {
         confirmationMsg.textContent = "🎉 Your submission has been recorded. Thanks for being part of Tech for Girls!";
-        
-        // ✅ Reset form and WhatsApp share status for next submission
         form.reset();
         clickCounter = 0;
         clickCountText.textContent = "Click count: 0/5";
